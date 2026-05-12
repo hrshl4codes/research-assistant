@@ -110,6 +110,11 @@ def get_store(db_path: str = ":memory:") -> duckdb.DuckDBPyConnection:
             f"and that duckdb>=0.10.0 is installed. Original error: {exc}"
         ) from exc
 
+    # HNSW persistence is experimental in DuckDB 1.x and must be opted in
+    # explicitly for file-backed databases. In-memory databases don't need it.
+    if db_path != ":memory:":
+        conn.execute("SET hnsw_enable_experimental_persistence = true;")
+
     conn.execute(_CREATE_TABLE_SQL)
     logger.debug("DuckDB store ready at '%s'.", db_path)
     return conn
@@ -162,6 +167,64 @@ def insert_chunk(
         """,
         [chunk.id, chunk.doc_id, chunk.text, chunk.source, chunk.embedding],
     )
+
+
+# ---------------------------------------------------------------------------
+# Bulk insert
+# ---------------------------------------------------------------------------
+
+
+def insert_chunks_batch(
+    conn: duckdb.DuckDBPyConnection,
+    chunks: list[Chunk],
+) -> None:
+    """
+    Insert multiple chunks in a single transaction.
+
+    One transaction is 10-100x faster than individual auto-committed inserts for
+    large batches: DuckDB flushes its write-ahead log once per transaction, not
+    once per row.
+
+    Uses INSERT OR REPLACE, so re-ingesting the same document is idempotent.
+    Existing rows with the same id are overwritten.
+
+    Args:
+        conn:   An open connection returned by `get_store`.
+        chunks: Validated Chunk instances to insert. Empty list is a no-op.
+
+    Raises:
+        ValueError: If any chunk has an embedding with the wrong dimensionality.
+    """
+    if not chunks:
+        return
+
+    for chunk in chunks:
+        if len(chunk.embedding) != _EMBEDDING_DIM:
+            raise ValueError(
+                f"Chunk '{chunk.id}' has {len(chunk.embedding)}-dim embedding; "
+                f"expected {_EMBEDDING_DIM}."
+            )
+
+    records = [
+        [c.id, c.doc_id, c.text, c.source, c.embedding]
+        for c in chunks
+    ]
+
+    conn.execute("BEGIN TRANSACTION;")
+    try:
+        conn.executemany(
+            """
+            INSERT OR REPLACE INTO chunks (id, doc_id, text, source, embedding)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            records,
+        )
+        conn.execute("COMMIT;")
+    except Exception:
+        conn.execute("ROLLBACK;")
+        raise
+
+    logger.debug("Batch-inserted %d chunk(s).", len(chunks))
 
 
 # ---------------------------------------------------------------------------
