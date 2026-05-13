@@ -63,6 +63,7 @@ from rich.console import Console
 
 from agents._llm import make_agent, run_with_fallback
 from agents._prompts import RETRIEVER_SYSTEM
+from agents._tracing import trace
 from rag.embedder import Embedder
 from rag.store import search_chunks
 
@@ -81,6 +82,7 @@ class RetrieverAgent:
         self._embedder = embedder
         self._top_k = top_k
 
+    @trace("RetrieverAgent.answer")
     def answer(self, query: str) -> RetrievalResult:
         query_vec = self._embedder.encode_single(query)
         results = search_chunks(self._conn, query_vec, top_k=self._top_k)

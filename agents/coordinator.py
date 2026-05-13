@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import re
 
+from agents._tracing import trace
+
 # Deterministic arithmetic pre-filter — matches queries that are mostly math
 # operators and numbers, so we can route to the calculator without an LLM call.
 
@@ -72,6 +74,7 @@ class Coordinator:
         self._retriever = RetrieverAgent(conn=conn, embedder=embedder)
         self._general = GeneralAgent()
 
+    @trace("Coordinator.route")
     def route(self, query: str) -> RoutingDecision:
         if looks_like_arithmetic(query):
             return RoutingDecision(
@@ -122,6 +125,7 @@ class Coordinator:
                 followup_description=None,
             )
 
+    @trace("Coordinator.handle")
     def handle(self, query: str) -> dict:
         """End-to-end: route, run agent(s), return a bundle the CLI can render."""
         decision = self.route(query)

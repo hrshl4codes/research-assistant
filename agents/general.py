@@ -20,6 +20,7 @@ from rich.console import Console
 
 from agents._llm import make_agent, run_with_fallback
 from agents._prompts import GENERAL_SYSTEM
+from agents._tracing import trace
 from schemas.results import GeneralResult
 from schemas.tools import ToolCall
 from tools.calculator import CalculatorInput, calculate
@@ -34,6 +35,7 @@ class GeneralAgent:
     def __init__(self) -> None:
         pass
 
+    @trace("GeneralAgent.answer")
     def answer(self, query: str) -> GeneralResult:
         # Per-call audit log — cleared at the start of every answer() call.
         call_log: list[ToolCall] = []
