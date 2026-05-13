@@ -5,8 +5,11 @@ fallback behavior, and base configuration are defined in one place.
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any, Callable
+
+_log = logging.getLogger(__name__)
 
 from agno.agent import Agent
 from agno.models.openrouter import OpenRouter
@@ -55,6 +58,7 @@ def run_with_fallback(builder: Callable[[bool], Agent], prompt: str) -> Any:
     try:
         agent = builder(True)
         return agent.run(prompt)
-    except Exception:
+    except Exception as primary_exc:
+        _log.warning("Primary model failed (%s: %s), retrying with fallback", type(primary_exc).__name__, primary_exc)
         agent = builder(False)
         return agent.run(prompt)

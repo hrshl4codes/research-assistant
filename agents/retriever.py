@@ -122,6 +122,15 @@ class RetrieverAgent:
                 refusal_reason=f"LLM call failed: {exc}",
             )
 
+        if not answer_text:
+            return RetrievalResult(
+                query=query,
+                answer="",
+                retrieved_chunks=search_results_to_retrieved_chunks(results),
+                confidence="low",
+                refusal_reason="The model returned an empty response for this query.",
+            )
+
         confidence = confidence_from_distance(results[0].cosine_distance)
 
         return RetrievalResult(

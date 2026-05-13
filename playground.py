@@ -23,11 +23,19 @@ from agents.general import GeneralAgent
 
 
 def _build_agents():
-    """Build Agno Agent instances for Playground registration."""
-    retriever_agent = make_agent(system=RETRIEVER_SYSTEM)
+    """Build Agno Agent instances for Playground registration.
+
+    The general agent is fully functional with calculator and web_search tools.
+    For document retrieval, use the CLI: python assistant.py "your question"
+    """
     general_agent = make_agent(
         system=GENERAL_SYSTEM,
         tools=_get_general_tools(),
+    )
+    # The retriever agent in the Playground cannot perform vector search
+    # (no DuckDB connection in this context). For grounded doc Q&A, use the CLI.
+    retriever_agent = make_agent(
+        system=RETRIEVER_SYSTEM + "\n\nNote: In the Playground, document chunks are not pre-loaded. For real retrieval, run: python assistant.py 'your question'",
     )
     return retriever_agent, general_agent
 

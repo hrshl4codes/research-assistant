@@ -63,14 +63,12 @@ def run() -> None:
         if args.quick:
             decision = coord.route(q)
             actual_agent = {
-                "retriever_agent": "retriever_agent",
-                "general_agent": "general_agent",
-                "mixed": "mixed",
-                "unclear": "none",
                 "document_qa": "retriever_agent",
                 "general_knowledge": "general_agent",
                 "calculation": "general_agent",
                 "web_search": "general_agent",
+                "mixed": "mixed",
+                "unclear": "none",
             }.get(decision.query_type, decision.selected_agent)
             actual_tools: list[str] = list(decision.tools_likely_needed)
         else:
