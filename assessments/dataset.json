@@ -1,0 +1,82 @@
+[
+  {
+    "id": "doc-01",
+    "query": "What is this document about?",
+    "expected_agent": "retriever_agent",
+    "expected_tools": [],
+    "expected_confidence_band": "high|medium",
+    "notes": "Generic doc-summary question. Should route to retriever."
+  },
+  {
+    "id": "doc-02",
+    "query": "Summarize the main contribution in one sentence.",
+    "expected_agent": "retriever_agent",
+    "expected_tools": [],
+    "expected_confidence_band": "high|medium",
+    "notes": "Tests grounded summarization."
+  },
+  {
+    "id": "doc-03",
+    "query": "Who are the authors of this paper?",
+    "expected_agent": "retriever_agent",
+    "expected_tools": [],
+    "expected_confidence_band": "high|medium|low",
+    "notes": "Tests metadata retrieval. May refuse if metadata is not in the chunks."
+  },
+  {
+    "id": "calc-01",
+    "query": "What is 12 * 8 + sqrt(81)?",
+    "expected_agent": "general_agent",
+    "expected_tools": ["calculator"],
+    "expected_confidence_band": "n/a",
+    "notes": "Pre-filter should match. Calculator should return 105."
+  },
+  {
+    "id": "calc-02",
+    "query": "Compute (1 + sqrt(5)) / 2 to 6 decimal places.",
+    "expected_agent": "general_agent",
+    "expected_tools": ["calculator"],
+    "expected_confidence_band": "n/a",
+    "notes": "Golden ratio. Pre-filter likely matches."
+  },
+  {
+    "id": "gen-01",
+    "query": "Why is the sky blue?",
+    "expected_agent": "general_agent",
+    "expected_tools": [],
+    "expected_confidence_band": "n/a",
+    "notes": "Pure parametric knowledge. Should NOT call any tool."
+  },
+  {
+    "id": "gen-02",
+    "query": "What is the capital of Australia?",
+    "expected_agent": "general_agent",
+    "expected_tools": [],
+    "expected_confidence_band": "n/a",
+    "notes": "Trivia. No tool needed."
+  },
+  {
+    "id": "web-01",
+    "query": "What is retrieval augmented generation?",
+    "expected_agent": "general_agent",
+    "expected_tools": ["web_search"],
+    "expected_confidence_band": "n/a",
+    "notes": "Matches the mock web-search DB exactly. Should invoke web_search."
+  },
+  {
+    "id": "mixed-01",
+    "query": "What does the document say about HNSW, and how does it compare to IVF-Flat in general?",
+    "expected_agent": "mixed",
+    "expected_tools": ["web_search"],
+    "expected_confidence_band": "medium|low",
+    "notes": "Compound query: doc grounding + general reasoning. Tests mixed-routing path."
+  },
+  {
+    "id": "unclear-01",
+    "query": "asdf",
+    "expected_agent": "none",
+    "expected_tools": [],
+    "expected_confidence_band": "n/a",
+    "notes": "Garbage input. Should route to unclear and produce clarification."
+  }
+]
