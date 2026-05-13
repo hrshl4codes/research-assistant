@@ -53,3 +53,114 @@ def search_results_to_retrieved_chunks(results: list[SearchResult]) -> list[Retr
         )
         for r in results
     ]
+
+
+# ---------------------------------------------------------------------------
+# Agent class
+# ---------------------------------------------------------------------------
+
+from rich.console import Console
+
+from agents._llm import make_agent, run_with_fallback
+from agents._prompts import RETRIEVER_SYSTEM
+from rag.embedder import Embedder
+from rag.store import search_chunks
+
+console = Console()
+
+
+class RetrieverAgent:
+    """
+    Retrieves top-k chunks for a query, then asks the LLM to answer using ONLY
+    those chunks. Always returns a RetrievalResult — even on refusal — so the
+    UI can show what was retrieved.
+    """
+
+    def __init__(self, conn, embedder: Embedder, top_k: int = 4) -> None:
+        self._conn = conn
+        self._embedder = embedder
+        self._top_k = top_k
+
+    def answer(self, query: str) -> RetrievalResult:
+        query_vec = self._embedder.encode_single(query)
+        results = search_chunks(self._conn, query_vec, top_k=self._top_k)
+
+        if not results:
+            return RetrievalResult(
+                query=query,
+                answer="",
+                retrieved_chunks=[],
+                confidence="low",
+                refusal_reason="The vector store returned no chunks for this query.",
+            )
+
+        chunks_block = format_chunks_for_prompt(results)
+        prompt = (
+            f"User question: {query}\n\n"
+            f"Document chunks (use ONLY these to answer):\n{chunks_block}\n\n"
+            f"Respond with your answer citing chunk numbers like [chunk 1]. "
+            f"Be concise. If the chunks don't address the question, say so plainly."
+        )
+
+        def builder(primary: bool):
+            return make_agent(
+                system=RETRIEVER_SYSTEM,
+                primary=primary,
+            )
+
+        try:
+            raw = run_with_fallback(builder, prompt)
+            answer_text = str(raw.content if hasattr(raw, "content") else raw).strip()
+        except Exception as exc:
+            return RetrievalResult(
+                query=query,
+                answer="",
+                retrieved_chunks=search_results_to_retrieved_chunks(results),
+                confidence="low",
+                refusal_reason=f"LLM call failed: {exc}",
+            )
+
+        confidence = confidence_from_distance(results[0].cosine_distance)
+
+        return RetrievalResult(
+            query=query,
+            answer=answer_text,
+            retrieved_chunks=search_results_to_retrieved_chunks(results),
+            confidence=confidence,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Smoke test (requires API key and ingested DB)
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    from rag.store import get_store
+
+    DB = "data/research_assistant.duckdb"
+    if not Path(DB).exists():
+        console.print(f"[red]Missing {DB}. Run `python ingest.py` first.[/red]")
+        sys.exit(1)
+
+    console.rule("[bold cyan]RetrieverAgent Smoke Test[/bold cyan]")
+    embedder = Embedder()
+    conn = get_store(DB)
+    agent = RetrieverAgent(conn=conn, embedder=embedder, top_k=4)
+
+    queries = [
+        "What is this document about?",
+        "Summarize the main contribution in one sentence.",
+    ]
+    for q in queries:
+        console.rule(f"[dim]{q}[/dim]")
+        result = agent.answer(q)
+        console.print(f"[bold]confidence:[/bold] {result.confidence}")
+        if result.refusal_reason:
+            console.print(f"[yellow]refusal:[/yellow] {result.refusal_reason}")
+        console.print(f"[bold]answer:[/bold] {result.answer or '(refused)'}")
+        console.print(f"[dim]chunks retrieved: {len(result.retrieved_chunks)}[/dim]\n")
