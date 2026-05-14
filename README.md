@@ -1,6 +1,6 @@
 # Research Assistant
 
-Three agents, one CLI: routes your question to the right specialist, shows what it retrieved or calculated, and gives you a traceable answer. Built on Agno 1.4.4, free tier OpenRouter LLMs, and DuckDB for the vector store.
+Three agents, one CLI: routes your question to the right specialist, shows what it retrieved or calculated, and gives you a traceable answer. Built on Agno 1.4.4, OpenAI (gpt-4o-mini), and DuckDB for the vector store.
 
 ## Quick start
 
@@ -82,7 +82,7 @@ Free tier LLMs are overconfident. Instead of trusting what the model claims, the
 
 ## Tradeoffs
 
-**Free tier LLM reliability.** The primary model (`meta-llama/llama-3.3-70b-instruct:free`) sometimes returns malformed JSON, ignores the structured output hint, or hits rate limits. The fallback to `google/gemini-2.0-flash-exp:free` catches most of those failures. When both fail, the coordinator defaults to `document_qa`, which is conservative but predictable. Expect occasional rough responses when the models are under load.
+**LLM fallback.** The primary model (`gpt-4o-mini`) falls back to `gpt-3.5-turbo` on failure. When both fail, the coordinator defaults to `document_qa`, which is conservative but predictable. Both models are configurable via `PRIMARY_MODEL` and `FALLBACK_MODEL` in `.env`.
 
 **Mock web search.** `tools/web_search.py` returns canned results from a static dataset, labelled `source="mock_data"`. It works for a handful of topics (RAG, transformers, federated learning) and returns empty for anything outside that set. The interface is real. Swapping in a live search API means changing one function in `web_search.py`.
 
