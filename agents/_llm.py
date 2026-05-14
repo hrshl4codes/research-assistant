@@ -12,13 +12,13 @@ from typing import Any, Callable
 _log = logging.getLogger(__name__)
 
 from agno.agent import Agent
-from agno.models.openrouter import OpenRouter
+from agno.models.openai import OpenAIChat
 
 
 def _model_id(primary: bool = True) -> str:
     if primary:
-        return os.getenv("PRIMARY_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
-    return os.getenv("FALLBACK_MODEL", "google/gemini-2.0-flash-exp:free")
+        return os.getenv("PRIMARY_MODEL", "gpt-4o-mini")
+    return os.getenv("FALLBACK_MODEL", "gpt-3.5-turbo")
 
 
 def make_agent(
@@ -41,7 +41,7 @@ def make_agent(
         Configured Agno Agent ready for .run() or .print_response().
     """
     return Agent(
-        model=OpenRouter(id=_model_id(primary)),
+        model=OpenAIChat(id=_model_id(primary)),
         description=system,
         response_model=response_model,
         tools=tools or [],
