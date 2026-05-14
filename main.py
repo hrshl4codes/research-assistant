@@ -8,6 +8,8 @@ Expected output: a single short response from the LLM proving the API
 key, the Agno model adapter, and the OpenRouter endpoint all work.
 """
 
+print("This is a smoke test for the LLM connection. For the actual assistant, run python assistant.py.")
+
 import os
 import sys
 

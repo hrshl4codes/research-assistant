@@ -118,7 +118,7 @@ Results go to `logs/assessment-<timestamp>.json`.
 | Logging and tracing | `@trace` decorator in `agents/_tracing.py` writing to `logs/trace.jsonl` |
 | Assessment dataset (10 queries) | `assessments/dataset.json` + `assessments/run.py` |
 | Performance: pre-filter, singletons, disk cache | `_tracing.py` (`get_embedder`, `get_store_conn`, `cache_get/put`) |
-| Agno Playground UI | `playground.py` (general agent with tools) |
+| Agno Playground UI | `playground.py` (general agent with tools). Playground exposes the general agent only; retrieval requires the CLI. |
 
 ## Repository layout
 
