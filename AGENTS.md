@@ -1,4 +1,4 @@
-# Research Assistant — Agent System
+# Research Assistant: Agent System
 
 Three agents handle all queries. The Coordinator decides which agent runs; no agent calls another directly. The Retriever answers from documents. The General agent answers from knowledge and tools.
 
