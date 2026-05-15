@@ -139,6 +139,9 @@ research_assistant/
 ├── assistant.py           # CLI entrypoint
 ├── playground.py          # Agno Playground UI
 ├── ingest.py              # document ingestion
+├── AGENTS.md              # agent behavior reference: routing, retrieval, tools, shared patterns
+├── RULES.md               # hard constraints enforced by code for every agent
+├── SKILLS.md              # what each agent can do, inputs, and outputs
 └── logs/                  # trace.jsonl + assessment reports
 ```
 
@@ -163,11 +166,3 @@ python playground.py
 # tests
 pytest tests/ -v
 ```
-
-## What's next
-
-- Replace mock web search with a live API (Tavily, Serper). The interface is already there; just swap the backend.
-- Add document types beyond PDF: DOCX, HTML, markdown.
-- Persist the response cache between sessions.
-- Streaming output in the CLI so long answers print incrementally.
-- Connect the Playground retriever to the actual vector store.
