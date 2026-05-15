@@ -196,7 +196,9 @@ def main() -> None:
     args = p.parse_args()
 
     if not args.repl and not args.query:
-        p.error("must provide a query or use --repl")
+        args.query = console.input("[bold cyan]Ask anything:[/bold cyan] ").strip()
+        if not args.query:
+            p.error("query cannot be empty")
 
     _check_db_or_exit()
 
